@@ -32,12 +32,26 @@ if not (args.d < args.n):
 
 with open(args.input, 'rb') as arq_origem:
     with open(args.output, 'wb') as arq_dest:
+        error = False
         while True:
             buff = arq_origem.read(BLOCK_SIZE)
             if not buff:
                 break  # eof
 
+            if len(buff) < 2:
+                print('Erro: número impar de bytes no arquivo_cifrado')
+                error = True
+                break
+
             m = int.from_bytes(buff, sys.byteorder)
             e = rsa.binExponentiate(m, args.d, args.n)
 
+            if (e > 255):
+                print('Erro: um bloco decifrado não é representável (> 255)')
+                error = True
+                break
+
             arq_dest.write(e.to_bytes(1, sys.byteorder))
+
+    if (error):
+        os.remove(args.output)
